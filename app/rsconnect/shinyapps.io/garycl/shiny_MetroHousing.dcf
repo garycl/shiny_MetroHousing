@@ -1,0 +1,12 @@
+name: shiny_MetroHousing
+title:
+username:
+account: garycl
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 3934037
+bundleId: 4449126
+url: https://garycl.shinyapps.io/shiny_MetroHousing/
+when: 1617939973.17295
+asMultiple: FALSE
+asStatic: FALSE
