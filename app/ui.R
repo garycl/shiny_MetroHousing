@@ -211,8 +211,8 @@ nationalPanel <- tabPanel(
       column(
         width = 6,
         h4("Select a grouping variable to observe the evolution of real estate prices
-              according to metro attributes. 
-           Red line marks the onset of the COVID-19 pandemic 
+              according to metro attributes.
+           Red line marks the onset of the COVID-19 pandemic
               in the United States at the end of 2019.
            Hover over points for more details.", style = "text-align: justify;"),
         br(),
@@ -246,7 +246,7 @@ zctaBivariateMapPanel <- tabPanel(
     selectInput(
       inputId = "zctaBivariateMapMetro",
       label = "METRO",
-      choices = sort(unique(zcta$MetroName)),
+      choices = sort(unique(cbsa$MetroName)),
       selected = "New York"
     ),
     selectInput(

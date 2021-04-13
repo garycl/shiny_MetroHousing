@@ -18,14 +18,25 @@ theme_set(theme_bw())
 load("zillow_cbsa.RData")
 load("zillow_zcta.RData")
 load("nhgis_zcta.RData")
+load("cbsa_centroids.RData")
+
+# Create YOY Change
 pctchange <- function(x) {
   (x - lag(x, n = 12)) / lag(x, n = 12)
 }
 lvlchange <- function(x) {
   (x - lag(x, n = 12))
 }
-zillowVariables <- colnames(cbsa)[7:12]
+zillowVariables <- c(
+  "ZHVI",
+  "ZORI",
+  "MedianDOZ",
+  "MedianSalePrice",
+  "InventoryForSale",
+  "MedianListingPrice"
+)
 
+# Zillow CBSA
 cbsa <- cbsa %>%
   group_by(MetroName) %>%
   arrange(MetroName, Date) %>%
@@ -37,10 +48,10 @@ cbsa <- cbsa %>%
     )
   ) %>%
   ungroup()
-
 cbsa <- as.data.table(cbsa)
 cbsa <- cbsa[Year >= 2015 & Year <= 2020]
 
+# Zillow ZCTA
 zcta <- zcta %>%
   group_by(ID) %>%
   arrange(ID, Date) %>%
@@ -52,15 +63,10 @@ zcta <- zcta %>%
     )
   ) %>%
   ungroup()
-
 zcta <- as.data.table(zcta)
-zcta <- zcta[Year >= 2015 & Year <= 2020]
-zcta <- zcta[!ID %in% c(12853, 2663, 4417)]
-nhgis_zcta <- as.data.table(nhgis_zcta)
-nhgis_zcta <- nhgis_zcta[!ID %in% c(12853, 2663, 4417)]
 
-# National Trends Panel
-zillowVariables <- colnames(cbsa)[7:12]
+# NHGIS
+nhgis_zcta <- as.data.table(nhgis_zcta)
 nhgisVariables <- list(
   "College Graduates (% Population 25 and Over)" = "CollegeGrad",
   "Finance, Insurance, & Real Estate Industries" = "Finance/Insurance/RealEstate",
@@ -71,12 +77,12 @@ nhgisVariables <- list(
   "Hispanic (% Population)" = "Hispanic",
   "Information Industry (% Worker)" = "Information",
   "Managerial Occs (% Worker)" = "Management",
-  "Median Income" = "MedianIncome",
+  "Median Income (1,000s)" = "MedianIncome",
   "Median Number of Rooms (Housing)" = "MedianRooms",
   "Median Year Built" = "MedianYearBuilt",
   "Owner Occupied (% Housing Units)" = "OwnerOccupied",
-  "Per Capita Income" = "PerCapitaIncome",
-  "Population" = "Pop",
+  "Per Capita Income (1,000s)" = "PerCapitaIncome",
+  "Population (1,000s)" = "Pop",
   "Population Density" = "PopDensity",
   "Travel to Work by Car (% Worker)" = "Car",
   "Unemployment Rate" = "UnempRate",
@@ -85,4 +91,3 @@ nhgisVariables <- list(
 
 # Shapefiles
 zcta_map <- st_read("zcta_map.shp")
-zcta_map <- zcta_map %>% rename(ID = geoid)

@@ -58,3 +58,5 @@ create_gifs.R
 # RData files
 *.RData
 
+# Google Maps
+get_centroids.py

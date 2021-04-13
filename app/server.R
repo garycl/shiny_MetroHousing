@@ -10,8 +10,8 @@ function(input, output, session) {
 
   output$overviewMap <- renderLeaflet({
     leaflet() %>%
-      addTiles() %>%
-      setView(lng = -98.85, lat = 37.45, zoom = 3) %>%
+      addProviderTiles(providers$CartoDB.Positron) %>%
+      setView(lng = -98.85, lat = 37.45, zoom = 4) %>%
       addLegend(
         "bottomright",
         values = c("No", "Yes"),
@@ -63,16 +63,21 @@ function(input, output, session) {
         flyTo(
           "overviewData",
           lng = -98.85, lat = 37.45,
-          zoom = 3
+          zoom = 4
         )
     } else {
       leaflet %>%
         clearMarkers() %>%
+        addMarkers(
+          lng = ~ CentralLon[1], lat = ~ CentralLat[1],
+          label = HTML("<strong> City Center<strong/>"),
+          labelOptions = labelOptions(textsize = "16px")
+        ) %>%
         flyTo(
           "overviewData",
           lng = overviewData()$CentralLon[1],
           lat = overviewData()$CentralLat[1],
-          zoom = 8
+          zoom = 9
         )
     }
 
@@ -337,7 +342,7 @@ function(input, output, session) {
 
   zctaData <- reactive({
     zctaData <- nhgis_zcta[DistCBD <= input$zctaBivariateMapDistCBD &
-                             MetroName == input$zctaBivariateMapMetro]
+      MetroName == input$zctaBivariateMapMetro]
     SDcols <- c(
       "ID",
       "DistCBD",
