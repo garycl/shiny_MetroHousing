@@ -5,8 +5,8 @@ account: garycl
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 3934037
-bundleId: 4449126
+bundleId: 4475068
 url: https://garycl.shinyapps.io/shiny_MetroHousing/
-when: 1617939973.17295
+when: 1618490281.65889
 asMultiple: FALSE
 asStatic: FALSE

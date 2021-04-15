@@ -312,8 +312,8 @@ df_cbsa <- df_cbsa %>%
   ) %>%
   mutate(
     MetroName = paste0(ID, ", ", State),
-    MedianDOZ = MedianDOZ,
-    InventoryForSale = InventoryForSale
+    SaleListingRatio = MedianSalePrice / MedianListingPrice,
+    PriceRentRatio = ZHVI / ZORI
   ) %>%
   select(-ID)
 
@@ -324,6 +324,7 @@ cbsa <- cbsa %>%
   group_by(ID) %>%
   arrange(ID, Date) %>%
   ungroup()
+cbsa <- as.data.table(cbsa)
 save(cbsa, file = "../../app/zillow_cbsa.RData")
 
 # Clean Zillow ZCTA Data ####
@@ -383,8 +384,10 @@ nhgis_zcta$LogDistCBD <- log(1 + nhgis_zcta$DistCBD)
 # Clean up NHGIS
 nhgis_zcta$MedianYearBuilt[nhgis_zcta$MedianYearBuilt == 0] <- NA
 nhgis_zcta$Pop <- nhgis_zcta$Pop / 1000
+nhgis_zcta$PopDensity <- nhgis_zcta$PopDensity / 1000
 nhgis_zcta$MedianIncome <- nhgis_zcta$MedianIncome / 1000
 nhgis_zcta$PerCapitaIncome <- nhgis_zcta$PerCapitaIncome / 1000
+nhgis_zcta <- as.data.table(nhgis_zcta)
 nhgis_zcta <- nhgis_zcta[!ID %in% c(12853, 2663, 4417)]
 save(nhgis_zcta, file = "../../app/nhgis_zcta.RData")
 
@@ -404,6 +407,7 @@ zcta <- zcta %>%
   arrange(ID, Date) %>%
   filter(Year >= 2015) %>%
   ungroup()
+zcta <- as.data.table(zcta)
 zcta <- zcta[!ID %in% c(12853, 2663, 4417)]
 save(zcta, file = "../../app/zillow_zcta.RData")
 

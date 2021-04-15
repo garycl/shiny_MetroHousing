@@ -210,12 +210,12 @@ function(input, output, session) {
     if (input$nationalGroup == "None") {
       cols <- c("MetroName", "Date", Variable)
       nationalData <- cbsa[, .SD, .SDcols = cols]
-      colnames(nationalData) <- c("MetroName", "Date", "Variable")
+      colnames(nationalData) <- c("MetroName", "Date", "HousingVariable")
       nationalData[, ":="(GroupVariable = 0, Group = 0)]
     } else {
       cols <- c("MetroName", "Date", Variable, input$nationalGroup)
       nationalData <- cbsa[, .SD, .SDcols = cols]
-      colnames(nationalData) <- c("MetroName", "Date", "Variable", "GroupVariable")
+      colnames(nationalData) <- c("MetroName", "Date", "HousingVariable", "GroupVariable")
       q <- quantile(nationalData$GroupVariable, 0.5, na.rm = T)
       nationalData <- nationalData[, Group :=
         ifelse(GroupVariable <= q, "Below Median", "Above Median")]
@@ -227,7 +227,7 @@ function(input, output, session) {
     nationalData <- nationalData[, .SD, .SDcols = c(
       "MetroName",
       "Date",
-      "Variable",
+      "HousingVariable",
       "GroupVariable",
       "Group"
     )]
@@ -236,8 +236,8 @@ function(input, output, session) {
   output$nationalLinePlot <- renderRbokeh({
     p <- nationalData() %>%
       group_by(Group, Date) %>%
-      summarize(Variable = mean(Variable, na.rm = T)) %>%
-      mutate(Variable = round(Variable, 4))
+      summarize(HousingVariable = mean(HousingVariable, na.rm = T)) %>%
+      mutate(HousingVariable = round(HousingVariable, 4))
 
     figure <- figure(
       width = 800, height = 600,
@@ -248,9 +248,9 @@ function(input, output, session) {
     if (max(nationalData()$Group) == min(nationalData()$Group)) {
       figure <- figure %>%
         ly_points(
-          x = Date, y = Variable,
+          x = Date, y = HousingVariable,
           data = p,
-          hover = list(Variable, Date)
+          hover = list(HousingVariable, Date)
         ) %>%
         ly_abline(
           v = as.Date("2019-12-31", "%Y-%m-%d"),
@@ -260,10 +260,14 @@ function(input, output, session) {
     } else {
       figure <- figure %>%
         ly_points(
-          x = Date, y = Variable,
+          x = Date, y = HousingVariable,
           color = Group,
           data = p,
-          hover = list(Variable, Date, Group)
+          hover = list(
+            "Housing Variable" = HousingVariable,
+            Date,
+            Group
+          )
         ) %>%
         ly_abline(
           v = as.Date("2019-12-31", "%Y-%m-%d"),
@@ -284,11 +288,15 @@ function(input, output, session) {
 
   output$nationalScatterPlot <- renderRbokeh({
     p <- nationalData() %>%
+      filter(!is.na(HousingVariable)) %>%
       group_by(MetroName) %>%
-      summarize_at(c("Variable", "GroupVariable"), mean, na.rm = T) %>%
-      mutate_at(c("Variable", "GroupVariable"), function(x) {
-        round(x, 4)
-      })
+      summarize_at(c("HousingVariable", "GroupVariable"), mean, na.rm = T) %>%
+      mutate_at(
+        c("HousingVariable", "GroupVariable"),
+        function(x) {
+          round(x, 4)
+        }
+      )
 
     figure <- figure(
       width = 800, height = 600,
@@ -300,19 +308,23 @@ function(input, output, session) {
       figure <- figure %>%
         ly_text(
           x = 0,
-          text = "Select a group variable.",
+          text = "Select a grouping variable.",
           align = "center"
         )
     } else {
       figure <- figure %>%
         ly_points(
-          x = GroupVariable, y = Variable,
+          x = GroupVariable, y = HousingVariable,
           color = "#C85A5A",
           data = p,
-          hover = list(MetroName, Variable, GroupVariable)
+          hover = list(
+            "Metro" = MetroName,
+            "Housing Variable" = HousingVariable,
+            "Grouping Variable" = GroupVariable
+          )
         ) %>%
         ly_lines(
-          lowess(x = GroupVariable, y = Variable),
+          lowess(x = GroupVariable, y = HousingVariable),
           width = 3,
           data = p
         )
@@ -335,16 +347,17 @@ function(input, output, session) {
       filter(MetroName == input$zctaBivariateMapMetro)
   })
 
-  observe({
-    nhgisVariables2 <- nhgisVariables[!nhgisVariables %in% c(input$zctaBivariateMapVar1)]
-    updateSelectInput(inputId = "zctaBivariateMapVar2", choices = nhgisVariables2)
-  })
+  # observe({
+  #   nhgisVariables2 <- nhgisVariables[!nhgisVariables %in% c(input$zctaBivariateMapVar1)]
+  #   updateSelectInput(inputId = "zctaBivariateMapVar2", choices = nhgisVariables2)
+  # })
 
   zctaData <- reactive({
     zctaData <- nhgis_zcta[DistCBD <= input$zctaBivariateMapDistCBD &
       MetroName == input$zctaBivariateMapMetro]
     SDcols <- c(
       "ID",
+      "MetroName",
       "DistCBD",
       input$zctaBivariateMapVar1, input$zctaBivariateMapVar2,
       "CentralLat", "CentralLon"
@@ -352,18 +365,19 @@ function(input, output, session) {
     zctaData <- zctaData[, .SD, .SDcols = SDcols]
     colnames(zctaData) <- c(
       "ID",
+      "MetroName",
       "DistCBD",
       "Variable.1", "Variable.2",
       "CentralLat", "CentralLon"
     )
-    SDcols <- colnames(zctaData)[c(2:6)]
+    SDcols <- colnames(zctaData)[c(3:7)]
     zctaData <- zctaData[!is.na(Variable.1) & !is.na(Variable.2)]
-    zctaData <- zctaData[, lapply(.SD, mean, na.rm = T), by = "ID", .SDcols = SDcols]
+    zctaData <- zctaData[, lapply(.SD, mean, na.rm = T), by = c("ID", "MetroName"), .SDcols = SDcols]
   })
 
   output$zctaBivariateMap <- renderPlot({
     zctaCityCenter <- zctaData() %>%
-      select(CentralLat, CentralLon) %>%
+      select(CentralLat, CentralLon, MetroName) %>%
       distinct() %>%
       st_as_sf(coords = c("CentralLon", "CentralLat"), crs = 4326)
 
@@ -383,6 +397,12 @@ function(input, output, session) {
         mapping = aes(fill = bi_class),
         size = 0.1,
         show.legend = FALSE
+      ) +
+      geom_sf(
+        data = zctaCityCenter,
+        size = 7,
+        color = "orange",
+        show.legend = FALSE,
       ) +
       bi_scale_fill(pal = "GrPink", dim = 2) +
       bi_theme()
@@ -492,14 +512,18 @@ function(input, output, session) {
     figure(
       width = 600, height = 300,
       xlab = "", ylab = "",
-      title = "Distance to CBD in km (x-axis) and Variable 1 (y-axis)",
+      title = "Distance to city center in km (x-axis) and Variable 1 (y-axis)",
       legend = "top_right"
     ) %>%
       ly_points(
         x = DistCBD, y = Variable.1,
         color = "#C85A5A",
-        hover = list(ID, DistCBD, Variable.1),
-        data = zctaData1
+        data = zctaData1,
+        hover = list(
+          "ZCTA" = ID,
+          "Distance" = DistCBD,
+          "Variable 1" =  Variable.1
+        ),
       ) %>%
       ly_lines(
         lowess(x = DistCBD, y = Variable.1),
@@ -524,14 +548,18 @@ function(input, output, session) {
     figure(
       width = 600, height = 300,
       xlab = "", ylab = "",
-      title = "Distance to CBD in km (x-axis) and Variable 2 (y-axis)",
+      title = "Distance to city center in km (x-axis) and Variable 2 (y-axis)",
       legend = "top_left"
     ) %>%
       ly_points(
         x = DistCBD, y = Variable.2,
         color = "#64ACBE",
         data = zctaData2,
-        hover = list(ID, DistCBD, Variable.2)
+        hover = list(
+          "ZCTA" = ID,
+          "Distance" = DistCBD,
+          "Variable 2" =  Variable.2
+        )
       ) %>%
       ly_lines(
         lowess(x = DistCBD, y = Variable.2),

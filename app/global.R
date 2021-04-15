@@ -31,9 +31,9 @@ zillowVariables <- c(
   "ZHVI",
   "ZORI",
   "MedianDOZ",
-  "MedianSalePrice",
   "InventoryForSale",
-  "MedianListingPrice"
+  "SaleListingRatio",
+  "PriceRentRatio"
 )
 
 # Zillow CBSA
@@ -68,14 +68,14 @@ zcta <- as.data.table(zcta)
 # NHGIS
 nhgis_zcta <- as.data.table(nhgis_zcta)
 nhgisVariables <- list(
-  "College Graduates (% Population 25 and Over)" = "CollegeGrad",
-  "Finance, Insurance, & Real Estate Industries" = "Finance/Insurance/RealEstate",
+  "College Grads (% Pop 25 & Over)" = "CollegeGrad",
+  "Finance Industries (% Worker)" = "Finance/Insurance/RealEstate",
   "Foreign Born (% Population)" = "Foreign.Born",
   "Gini Inequality Index" = "Gini",
   "Have Computer (% Households)" = "HaveComputer",
   "Have Internet (% Households)" = "HaveInternet",
   "Hispanic (% Population)" = "Hispanic",
-  "Information Industry (% Worker)" = "Information",
+  "IT Industry (% Worker)" = "Information",
   "Managerial Occs (% Worker)" = "Management",
   "Median Income (1,000s)" = "MedianIncome",
   "Median Number of Rooms (Housing)" = "MedianRooms",
